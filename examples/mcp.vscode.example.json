@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "free-news": {
+      "type": "stdio",
+      "command": "conda",
+      "args": ["run", "-n", "py38", "python", "<PROJECT_DIR>\\news_mcp_server.py"],
+      "cwd": "<PROJECT_DIR>"
+    }
+  }
+}

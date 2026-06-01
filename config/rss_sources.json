@@ -1,0 +1,134 @@
+{
+  "defaults": {
+    "request_timeout_seconds": 12,
+    "items_per_feed": 8
+  },
+  "sources": [
+    {
+      "name": "BBC News",
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "category": "general",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 1.0
+    },
+    {
+      "name": "BBC World",
+      "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+      "category": "world",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 1.0
+    },
+    {
+      "name": "BBC Technology",
+      "url": "https://feeds.bbci.co.uk/news/technology/rss.xml",
+      "category": "technology",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 1.0
+    },
+    {
+      "name": "BBC Business",
+      "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "category": "business",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 1.0
+    },
+    {
+      "name": "The Guardian World",
+      "url": "https://www.theguardian.com/world/rss",
+      "category": "world",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.95
+    },
+    {
+      "name": "The Guardian Technology",
+      "url": "https://www.theguardian.com/technology/rss",
+      "category": "technology",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.95
+    },
+    {
+      "name": "NPR News",
+      "url": "https://feeds.npr.org/1001/rss.xml",
+      "category": "general",
+      "language": "en",
+      "region": "us",
+      "enabled": true,
+      "weight": 0.9
+    },
+    {
+      "name": "NPR World",
+      "url": "https://feeds.npr.org/1004/rss.xml",
+      "category": "world",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.9
+    },
+    {
+      "name": "NYTimes World",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+      "category": "world",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.9
+    },
+    {
+      "name": "NYTimes Technology",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+      "category": "technology",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.9
+    },
+    {
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "category": "world",
+      "language": "en",
+      "region": "world",
+      "enabled": true,
+      "weight": 0.85
+    },
+    {
+      "name": "Xinhua World",
+      "url": "http://www.xinhuanet.com/world/news_world.xml",
+      "category": "world",
+      "language": "zh",
+      "region": "cn",
+      "enabled": true,
+      "weight": 0.85
+    },
+    {
+      "name": "China News World",
+      "url": "https://www.chinanews.com.cn/rss/world.xml",
+      "category": "world",
+      "language": "zh",
+      "region": "cn",
+      "enabled": true,
+      "weight": 0.8
+    },
+    {
+      "name": "Global Times",
+      "url": "https://www.globaltimes.cn/rss/outbrain.xml",
+      "category": "world",
+      "language": "en",
+      "region": "cn",
+      "enabled": false,
+      "weight": 0.75
+    }
+  ]
+}

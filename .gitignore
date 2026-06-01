@@ -1,0 +1,27 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.cache/
+tmp/
+temp/
+*.tmp
+*.bak
+
+.news_mcp_preferences.json
+*.log
+.vscode/
+
+# Generated news brief artifacts
+.daily_brief_latest.json
+.daily_brief_*.json
+daily_brief_*.json
+briefs/
+*.eml
+
+.DS_Store
+Thumbs.db
