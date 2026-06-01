@@ -1,0 +1,7 @@
+interface:
+  display_name: "World Monitor Free News"
+  short_description: "Create sourced news email digests."
+  default_prompt: "Use $world-monitor-free-news to create a sourced daily brief and send it by email when requested."
+
+policy:
+  allow_implicit_invocation: true
