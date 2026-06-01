@@ -311,7 +311,158 @@ def html_linkify(escaped_text: str) -> str:
     )
 
 
+NEWS_EMAIL_SECTION_ICONS = {
+    "国际": "🌍",
+    "国内": "🏠",
+    "科技": "💻",
+    "财经": "💰",
+}
+
+
+def normalize_news_email_section(line: str) -> Optional[str]:
+    value = line.strip()
+    value = re.sub(r"^#+\s*", "", value)
+    value = re.sub(r"^\*\*(.*?)\*\*$", r"\1", value).strip()
+    value = value.strip(" -*:：")
+    lower = value.lower()
+    aliases = {
+        "world": "国际",
+        "international": "国际",
+        "global": "国际",
+        "domestic": "国内",
+        "china": "国内",
+        "technology": "科技",
+        "tech": "科技",
+        "business": "财经",
+        "finance": "财经",
+        "financial": "财经",
+    }
+    if lower in aliases:
+        return aliases[lower]
+    for section in NEWS_EMAIL_SECTION_ICONS:
+        if value == section or value.startswith(f"{section}（") or value.startswith(f"{section}("):
+            return section
+    return None
+
+
+def parse_news_email_brief(text: str) -> Optional[Dict[str, Any]]:
+    intro: List[str] = []
+    sections: List[Dict[str, Any]] = []
+    current_section: Optional[Dict[str, Any]] = None
+    current_item: Optional[Dict[str, Any]] = None
+
+    def finish_item() -> None:
+        nonlocal current_item
+        if not current_item or not current_section:
+            current_item = None
+            return
+        summary_parts = current_item.pop("summary_parts", [])
+        current_item["summary"] = " ".join(summary_parts).strip()
+        if current_item.get("title"):
+            current_section["items"].append(current_item)
+        current_item = None
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        section = normalize_news_email_section(line)
+        if section:
+            finish_item()
+            current_section = {"title": section, "items": []}
+            sections.append(current_section)
+            continue
+
+        item_match = re.match(r"^(\d+)[\.、]\s*(.+)$", line)
+        if item_match and current_section is not None:
+            finish_item()
+            current_item = {
+                "title": item_match.group(2).strip(),
+                "summary_parts": [],
+                "source": "",
+                "url": "",
+            }
+            continue
+
+        if current_item is not None:
+            if re.match(r"^来源[:：]", line):
+                current_item["source"] = re.sub(r"^来源[:：]\s*", "", line).strip()
+            elif re.match(r"^链接[:：]", line):
+                current_item["url"] = re.sub(r"^链接[:：]\s*", "", line).strip()
+            else:
+                current_item["summary_parts"].append(line)
+        elif current_section is None:
+            intro.append(line)
+
+    finish_item()
+    sections = [section for section in sections if section["items"]]
+    if not sections:
+        return None
+    return {"intro": intro, "sections": sections}
+
+
+def render_news_email_brief_html(parsed: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    for note in parsed.get("intro", []):
+        content = html_linkify(html.escape(note))
+        parts.append(
+            '<p style="margin:0 0 10px;font-size:14px;line-height:1.7;color:#627d98;">'
+            f"{content}</p>"
+        )
+
+    for index, section in enumerate(parsed.get("sections", [])):
+        title = str(section.get("title") or "").strip()
+        icon = NEWS_EMAIL_SECTION_ICONS.get(title, "•")
+        margin_top = "26px" if index or parts else "12px"
+        parts.append(
+            f'<h2 style="font-size:20px;line-height:1.35;margin:{margin_top} 0 16px;'
+            'padding-bottom:10px;border-bottom:2px solid #102a43;color:#102a43;font-weight:700;">'
+            f"{html.escape(icon)} {html.escape(title)}</h2>"
+        )
+
+        for item in section.get("items", []):
+            title_text = html.escape(str(item.get("title") or "Untitled").strip())
+            url = str(item.get("url") or "").strip()
+            href = html.escape(url, quote=True)
+            if url:
+                title_html = (
+                    f'<a href="{href}" style="color:#102a43;text-decoration:none;">'
+                    f"{title_text}</a>"
+                )
+            else:
+                title_html = title_text
+
+            summary = html_linkify(html.escape(str(item.get("summary") or "").strip()))
+            source = html.escape(str(item.get("source") or "").strip())
+            meta_parts = []
+            if source:
+                meta_parts.append(source)
+            if url:
+                meta_parts.append(
+                    f'<a href="{href}" style="color:#3e4c59;text-decoration:none;">阅读原文 ↗</a>'
+                )
+            meta_html = " · ".join(meta_parts)
+
+            parts.append(
+                '<div style="margin:14px 0 18px;padding:18px 18px;background:#f8fafc;'
+                'border-left:3px solid #486581;border-radius:6px;">'
+                f'<div style="margin:0 0 10px;font-size:16px;line-height:1.45;'
+                f'font-weight:700;color:#102a43;">{title_html}</div>'
+                f'<div style="margin:0 0 12px;font-size:15px;line-height:1.65;'
+                f'color:#486581;">{summary}</div>'
+                f'<div style="font-size:13px;line-height:1.5;color:#627d98;">{meta_html}</div>'
+                '</div>'
+            )
+
+    return "\n".join(parts)
+
+
 def text_to_email_html(text: str) -> str:
+    structured = parse_news_email_brief(text)
+    if structured:
+        return render_news_email_brief_html(structured)
+
     parts: List[str] = []
     in_list = False
 
@@ -331,15 +482,15 @@ def text_to_email_html(text: str) -> str:
         if line.startswith("### "):
             close_list()
             content = html_linkify(html.escape(line[4:].strip()))
-            parts.append(f'<h3 style="font-size:16px;line-height:1.45;margin:22px 0 8px;color:#102a43;">{content}</h3>')
+            parts.append(f'<h3 style="font-size:16px;line-height:1.45;margin:22px 0 8px;color:#102a43;font-weight:700;">{content}</h3>')
         elif line.startswith("## "):
             close_list()
             content = html_linkify(html.escape(line[3:].strip()))
-            parts.append(f'<h2 style="font-size:18px;line-height:1.45;margin:26px 0 10px;color:#102a43;border-left:4px solid #1a73e8;padding-left:10px;">{content}</h2>')
+            parts.append(f'<h2 style="font-size:20px;line-height:1.35;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid #102a43;color:#102a43;font-weight:700;">{content}</h2>')
         elif line.startswith("# "):
             close_list()
             content = html_linkify(html.escape(line[2:].strip()))
-            parts.append(f'<h2 style="font-size:20px;line-height:1.4;margin:0 0 12px;color:#102a43;">{content}</h2>')
+            parts.append(f'<h2 style="font-size:22px;line-height:1.35;margin:0 0 14px;color:#102a43;font-weight:700;">{content}</h2>')
         elif re.match(r"^[-*]\s+", line):
             if not in_list:
                 parts.append('<ul style="margin:8px 0 14px 22px;padding:0;">')
@@ -349,7 +500,7 @@ def text_to_email_html(text: str) -> str:
         else:
             close_list()
             content = html_linkify(html.escape(line))
-            parts.append(f'<p style="margin:0 0 12px;line-height:1.72;">{content}</p>')
+            parts.append(f'<p style="margin:0 0 12px;line-height:1.72;color:#486581;">{content}</p>')
 
     close_list()
     return "\n".join(parts)
@@ -366,9 +517,13 @@ def render_email_template(subject: str, body: str, body_format: str) -> Tuple[st
         )
 
     body_html = body if body_format == "html" else text_to_email_html(body)
-    generated_at = utc_now().strftime("%Y-%m-%d %H:%M UTC")
+    now = utc_now()
+    generated_at = now.strftime("%Y年%m月%d日")
     preheader = clean_text(body)[:120] or subject
-    footer_note = "This email was generated locally by World Monitor free-news MCP. Verify important facts with the linked sources."
+    footer_note = (
+        "本邮件由 World Monitor · Free News MCP 自动生成。"
+        f"数据来源于 NewsAPI 及配置的 RSS 源，仅供个人参考。生成时间：{isoformat(now)}"
+    )
     replacements = {
         "subject": html.escape(subject),
         "preheader": html.escape(preheader),
